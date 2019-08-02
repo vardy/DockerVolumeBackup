@@ -16,6 +16,7 @@ from client import Client
 
 def main():
     client = Client()
+    subprocess.call(['ls', '-l', '-a', '/HostVolumeData'])
 
     if client.get_s3_client() is not None:
         volumes_to_backup = client.get_volumes_to_backup()
@@ -23,6 +24,7 @@ def main():
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
             # If metafile does not exist in directory, generate metafile
             for vol in arr_volumes:
+                return
                 # Check if volume exists, if not throw error and move on
                 # Check if entry for volume exists in metafile volumes array
                 #   If entry exists move on

@@ -6,3 +6,5 @@ services:
     build: .
     env_file:
      - .env
+    volumes:
+     - /var/lib/docker/volumes/:/HostVolumeData
