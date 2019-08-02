@@ -20,10 +20,17 @@ from client import Client
 from progress import ProgressPercentage
 
 def main():
-    client = Client()
+    log_level = os.environ.get('Log_Level', 'INFO').upper()
+
+    logging.basicConfig(
+        format='%(asctime)s: %(levelname)s: %(message)s', 
+        level=log_level
+    )
 
     logging.info('Contents of host volumes directory...')
-    subprocess.call(['ls', '-l', '-a', '/HostVolumeData'])
+    logging.info(os.listdir('/HostVolumeData'))
+
+    client = Client()
 
     if client.get_s3_client() is not None:
         volumes_to_backup = client.get_volumes_to_backup()
