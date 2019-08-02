@@ -21,7 +21,7 @@ from progress import ProgressPercentage
 
 def main():
     client = Client()
-    
+
     logging.info('Contents of host volumes directory...')
     subprocess.call(['ls', '-l', '-a', '/HostVolumeData'])
 
@@ -74,11 +74,11 @@ def main():
                 # Add system for how long to keep backups
                 # Add options for verbosity (file upload progress in stdout) (logging levels)
         else:
-            logging.error('No volumes were specified.')
+            logging.critical('No volumes were specified.')
             sys.exit(1)
             return
     else:
-        logging.error('Client failed to be instantiated.')
+        logging.critical('Client failed to be instantiated.')
         sys.exit(1)
         return
 
