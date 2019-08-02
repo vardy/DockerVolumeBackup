@@ -21,11 +21,11 @@ from progress import ProgressPercentage
 
 def main():
     client = Client()
+    
+    logging.info('Contents of host volumes directory...')
     subprocess.call(['ls', '-l', '-a', '/HostVolumeData'])
 
     if client.get_s3_client() is not None:
-        upload_file('test.txt', client)
-
         volumes_to_backup = client.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
@@ -72,7 +72,7 @@ def main():
                 # }
                 #
                 # Add system for how long to keep backups
-                # Add options for verbosity (file upload progress in stdout)
+                # Add options for verbosity (file upload progress in stdout) (logging levels)
         else:
             logging.error('No volumes were specified.')
             sys.exit(1)
