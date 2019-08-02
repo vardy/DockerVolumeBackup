@@ -126,7 +126,7 @@ def delete_object(object_name, client):
             Bucket=client.get_bucket_name(), 
             Key=object_name
         )
-    except: ClientError as ex:
+    except ClientError as ex:
         logging.error(ex)
         return False
     return True
