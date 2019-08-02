@@ -16,7 +16,7 @@ from botocore.exceptions import ClientError
 
 # Local source
 from client import Client
-from progress_percentage import ProgressPercentage
+from progress import ProgressPercentage
 
 def main():
     client = Client()
