@@ -9,6 +9,7 @@
 # Standard library
 import os
 import sys
+import logging
 import subprocess  # Module used for shell commands
 
 # Third party libraries
@@ -73,10 +74,10 @@ def main():
                 # Add system for how long to keep backups
                 # Add options for verbosity (file upload progress in stdout)
         else:
-            print('ERROR: No volumes were specified. Exiting.')
+            logging.error('No volumes were specified.')
             sys.exit(1)
     else:
-        print('ERROR: Client failed to be instantiated. Exiting.')
+        logging.error('Client failed to be instantiated.')
         sys.exit(1)
         return
 
@@ -102,7 +103,7 @@ def upload_file(file_name, client, object_name=None):
             Callback=ProgressPercentage(file_name)
         )
     except ClientError as ex:
-        print('ERROR: Failed to upload file \'%s\'' % (file_name))
+        logging.error(ex)
         return False
     return True
 
