@@ -5,6 +5,10 @@
     objects stored in the S3 filesystem.
 """
 
+# Standard library
+import logging
+import os
+
 # Third party libraries
 from botocore.exceptions import ClientError
 
@@ -31,6 +35,7 @@ def check_if_object_exists(object_name, client):
             return False
         else:
             logging.error(ex)
+            return
     else:
         return True
 
@@ -79,6 +84,36 @@ def upload_file(file_name, client, object_name=None):
         response = s3_client.upload_file(
             file_name, client.get_bucket_name(), object_path, 
             Callback=ProgressPercentage(file_name)
+        )
+    except ClientError as ex:
+        logging.error(ex)
+        return False
+    return True
+
+def download_object(object_name, client, file_name=None):
+    """ Download an object from an S3 bucket
+
+    :param object_name: Object to download
+    :param client: Client object
+    :param file_name: Name of file to save
+    :return: True if downloaded, else False
+    """
+
+    if file_name is None:
+        file_name = object_name
+    
+    s3_client = client.get_s3_client()
+
+    object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    root_dir_path = os.path.abspath(os.curdir)
+    file_path = root_dir_path + file_name
+
+    # Download the file
+    try:
+        response = s3_client.download_file(
+            Bucket=client.get_bucket_name(), 
+            Key=object_path, 
+            Filename=file_path
         )
     except ClientError as ex:
         logging.error(ex)

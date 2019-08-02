@@ -9,6 +9,7 @@
 # Standard library
 import os
 import sys
+import json
 import logging
 import subprocess  # Module used for shell commands
 
@@ -17,7 +18,9 @@ import logging_setup
 import s3_util
 from client import Client
 
-def main():
+import test
+
+def main():    
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
 
@@ -30,11 +33,25 @@ def main():
             metafile_exists = s3_util.check_if_object_exists('metafile', client)
             if not metafile_exists:
                 s3_util.upload_file('metafile_base.json', client, 'metafile')
+            
+            if not os.path.exists('temp'):
+                os.makedirs('temp')
+            
+            # Download metafile locally to be edited re-upload
+            # once all backups have finished.
+            s3_util.download_object('metafile', client, '/temp/metafile')
+            with open('./temp/metafile') as metafile_bin:
+                metafile_json = json.load(metafile_bin)
+                metafile_bin.close()
 
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
             for vol in arr_volumes:
-                return
-                # Check if volume exists, if not throw error and move on
+                if vol not in os.listdir('/HostVolumeData'):
+                    logging.error('Volume from env \'%s\' is not in host\'s Docker filesystem.' % (vol))
+                else:
+                    break
+                    # Continue
+
                 # Check if entry for volume exists in metafile volumes array
                 #   If entry exists move on
                 #   else add entry, generate snapshotID, init snapshot num to 0
