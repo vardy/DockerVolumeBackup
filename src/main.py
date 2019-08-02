@@ -13,12 +13,18 @@ import subprocess  # Module used for shell commands
 
 # Local source
 from client import Client
+from progress_percentage import ProgressPercentage
 
 def main():
     client = Client()
     subprocess.call(['ls', '-l', '-a', '/HostVolumeData'])
 
     if client.get_s3_client() is not None:
+        client.get_s3_client().upload_file(
+            '/test.txt', 'hermit', 'test_obj',
+            Callback=ProgressPercentage('/test.txt')
+        )
+
         volumes_to_backup = client.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
@@ -39,10 +45,13 @@ def main():
                 # s3_directory/
                 #     metafile
                 #     volume_name/
-                #         snapshotID_Interval_DateTime
+                #         snapshotID_Interval_DateTime/
+                #             data~
                 #     volume_name/
-                #         snapshotID_Interval_DateTime
-                #         snapshotID_Interval_DateTime
+                #         snapshotID_Interval_DateTime/
+                #             data~
+                #         snapshotID_Interval_DateTime/
+                #             data~
                 #
                 ## Metafile Structure (JSON)
                 #
@@ -60,6 +69,9 @@ def main():
                 #         }
                 #     ]
                 # }
+                #
+                # Add system for how long to keep backups
+                # Add options for verbosity (file upload progress in stdout)
         else:
             print('ERROR: No volumes were specified. Exiting.')
             sys.exit(1)
