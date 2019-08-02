@@ -89,8 +89,28 @@ def main():
         sys.exit(1)
         return
 
+def check_if_object_exists(object_name, client):
+    """ Check if a object exists in an S3 bucket
+
+    :param object_name: Object name in bucket to check
+    :param client: Client object
+    :return: True if file exists, else False
+    """
+
+    s3_client = client.get_s3_client()
+
+    try:
+        s3_client.head_object(Bucket=client.get_bucket_name(), Key=object_name)
+    except ClientError as ex:
+        if ex.response['Error']['Code'] == "404":
+            return False
+        else:
+            logging.error(ex)
+    else:
+        return True
+
 def upload_file(file_name, client, object_name=None):
-    """Upload a file to an S3 bucket
+    """ Upload a file to an S3 bucket
 
     :param file_name: File to upload
     :param client: Client object
