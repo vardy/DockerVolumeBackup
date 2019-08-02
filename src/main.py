@@ -23,8 +23,6 @@ def main():
 
     client = Client()
 
-    s3_util.upload_file('test.txt', client)
-
     if client.get_s3_client() is not None:
         volumes_to_backup = client.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
