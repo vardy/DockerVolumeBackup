@@ -62,8 +62,6 @@ def main():
 
             for i in range(0, len(metafile_json['volumes'])):
                 metafile_json['volumes'][i]['snapshot_num'] = metafile_json['volumes'][i]['snapshot_num'] + 1
-                # Save as new file
-                # Reset snapshot_num
                 for file_name in os.listdir('/HostVolumeData/%s/_data/' % (metafile_json['volumes'][i]['volume_name'])):
                     file_path = '/HostVolumeData/%s/_data/%s' % (metafile_json['volumes'][i]['volume_name'], file_name)
 
