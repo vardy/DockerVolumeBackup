@@ -76,6 +76,7 @@ def main():
         else:
             logging.error('No volumes were specified.')
             sys.exit(1)
+            return
     else:
         logging.error('Client failed to be instantiated.')
         sys.exit(1)
