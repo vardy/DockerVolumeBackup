@@ -16,6 +16,7 @@ class Client:
     __S3_Region = os.getenv('S3_Region')
     __S3_Access_Key = os.getenv('S3_Access_Key')
     __S3_Secret_Key = os.getenv('S3_Secret_Key')
+    __S3_Bucket = os.getenv('S3_Bucket_Name')
     __S3_Directory_Name = os.getenv('S3_Directory_Name')
     __Volumes_To_Backup = os.getenv('Volumes_To_Backup')
 
@@ -41,3 +42,6 @@ class Client:
 
     def get_directory_name(self):
         return self.__S3_Directory_Name
+    
+    def get_bucket_name(self):
+        return self.__S3_Bucket
