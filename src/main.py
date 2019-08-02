@@ -10,15 +10,14 @@
 import os
 import sys
 import json
+import uuid
 import logging
-import subprocess  # Module used for shell commands
+from datetime import datetime
 
 # Local source
 import logging_setup
 import s3_util
 from client import Client
-
-import test
 
 def main():    
     logging.info('Contents of host volumes directory...')
@@ -46,52 +45,59 @@ def main():
 
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
             for vol in arr_volumes:
-                if vol not in os.listdir('/HostVolumeData'):
-                    logging.error('Volume from env \'%s\' is not in host\'s Docker filesystem.' % (vol))
+                if vol in os.listdir('/HostVolumeData'):
+                    found = False
+                    for i in range(0, len(metafile_json['volumes'])):
+                        if metafile_json['volumes'][i]['volume_name'].__eq__(vol):
+                            found = True
+                    if not found:
+                        # Volume exists but is not in metafile
+                        metafile_json['volumes'].append({
+                                'volume_name': vol, 
+                                'current_snapshot_id': uuid.uuid4().hex, 
+                                'snapshot_num': 0
+                        })
                 else:
-                    break
-                    # Continue
+                    logging.error('Volume from env \'%s\' is not in host\'s Docker filesystem.' % (vol))
 
-                # Check if entry for volume exists in metafile volumes array
-                #   If entry exists move on
-                #   else add entry, generate snapshotID, init snapshot num to 0
-                # Check metafile
-                #   Increment snapshot number
-                #   If snapshot number > interval, create new file and save first snapshot, reset snapshot num, generate new snapshot id
-                #   else overwrite current snapshot with new interval number
-                #
-                ## S3 Directory Structure
-                #
-                # s3_directory/
-                #     metafile
-                #     volume_name/
-                #         snapshotID_Interval_DateTime/
-                #             data~
-                #     volume_name/
-                #         snapshotID_Interval_DateTime/
-                #             data~
-                #         snapshotID_Interval_DateTime/
-                #             data~
-                #
-                ## Metafile Structure (JSON)
-                #
-                # {
-                #     "volumes": [
-                #         {
-                #              "volume_name": "loyalbot_db-data",
-                #              "current_snapshot_id": "uuid",
-                #              "snapshot_num": 1
-                #         },
-                #         {
-                #              "volume_name": "onebillionquacks_db-data",
-                #              "current_snapshot_id": "uuid",
-                #              "snapshot_num": 1
-                #         }
-                #     ]
-                # }
-                #
-                # Add system for how long to keep backups
-                # Add options for verbosity (file upload progress in stdout) (logging levels)
+            for i in range(0, len(metafile_json['volumes'])):
+                metafile_json['volumes'][i]['snapshot_num'] = metafile_json['volumes'][i]['snapshot_num'] + 1
+                # Save as new file
+                # Reset snapshot_num
+                for file_name in os.listdir('/HostVolumeData/%s/_data/' % (metafile_json['volumes'][i]['volume_name'])):
+                    file_path = '/HostVolumeData/%s/_data/%s' % (metafile_json['volumes'][i]['volume_name'], file_name)
+
+                    current_datetime = datetime.now().strftime('%Y-%m-%d-%H%M')
+                    if metafile_json['volumes'][i]['snapshot_num'] - 1 > 0:
+                        if not metafile_json['volumes'][i]['snapshot_num'] > int(os.getenv('backup_interval')):
+                            response = s3_util.delete_directory(
+                                metafile_json['volumes'][i]['volume_name'] + '/' + 
+                                metafile_json['volumes'][i]['current_snapshot_id'] + '_' +
+                                str(metafile_json['volumes'][i]['snapshot_num'] - 1), 
+                                client
+                            )
+                        else:
+                            metafile_json['volumes'][i]['current_snapshot_id'] = uuid.uuid4().hex
+                            metafile_json['volumes'][i]['snapshot_num'] = 1
+                    response = s3_util.upload_file(file_path, client, '%s/%s_%d_%s/%s' % (
+                        metafile_json['volumes'][i]['volume_name'],
+                        metafile_json['volumes'][i]['current_snapshot_id'],
+                        metafile_json['volumes'][i]['snapshot_num'],
+                        current_datetime, 
+                        file_name
+                    ))
+
+            # Write new metafile json to temp filesystem
+            with open('./temp/metafile', 'w') as json_bin:
+                json.dump(metafile_json, json_bin, indent=4)
+            
+            # Upload new metafile from temp filesystem to S3 for use
+            # in next backup.
+            response = s3_util.upload_file(
+                './temp/metafile',
+                client, 
+                'metafile'
+            )
         else:
             logging.critical('No volumes were specified.')
             sys.exit(1)

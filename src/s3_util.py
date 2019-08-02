@@ -7,6 +7,7 @@
 
 # Standard library
 import logging
+import pprint
 import os
 
 # Third party libraries
@@ -39,7 +40,7 @@ def check_if_object_exists(object_name, client):
     else:
         return True
 
-def delete_object(object_name, client):
+def delete_object(object_name, client, **kwargs):
     """ Delete an object in an S3 bucket
 
     :param object_name: Object name in bucket to delete
@@ -47,9 +48,19 @@ def delete_object(object_name, client):
     :return: True if file deleted, else False
     """
 
+    abs = False
+    if kwargs is not None:
+        for key, value in kwargs.items():
+            if key == 'abs_path':
+                if value == True:
+                    abs = True
+
     s3_client = client.get_s3_client()
 
-    object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    if not abs:
+        object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    else:
+        object_path = object_name
 
     # Delete the file
     try:
@@ -119,3 +130,32 @@ def download_object(object_name, client, file_name=None):
         logging.error(ex)
         return False
     return True
+
+def list_objects_in_dir(dir_name, client):
+    """ Lists objects in specified directory in S3
+
+    :param dir_name: The directory to list recursively from
+    :param client: Client object
+    :return: Dictionary response
+    """
+
+    return client.get_s3_client().list_objects_v2(
+        Bucket=client.get_bucket_name(),
+        Prefix=dir_name
+    )
+
+def delete_directory(directory_path, client):
+    """ Delete all objects in S3 directory
+
+    :param directory_path: Path to directory to delete
+    :param client: Client object
+    :return: True if deleted successfully, else False
+    """
+
+    # For each item in directory, pass to delete_file with abs_path kwarg
+    try:
+        for element in list_objects_in_dir('docker_backups/' + directory_path, client)['Contents']:
+            delete_object(element['Key'], client, abs_path=True)
+    except KeyError as ex:
+        return
+    return
