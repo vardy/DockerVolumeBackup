@@ -21,7 +21,7 @@ def check_if_object_exists(object_name, client):
 
     s3_client = client.get_s3_client()
 
-    object_path = '%s/%s' % (client.get_directory_name + object_name)
+    object_path = '%s/%s' % (client.get_directory_name() + object_name)
 
     # Perform HEAD on object to check if it exists
     try:
@@ -44,7 +44,7 @@ def delete_object(object_name, client):
 
     s3_client = client.get_s3_client()
 
-    object_path = '%s/%s' % (client.get_directory_name + object_name)
+    object_path = '%s/%s' % (client.get_directory_name() + object_name)
 
     # Delete the file
     try:
@@ -72,7 +72,7 @@ def upload_file(file_name, client, object_name=None):
 
     s3_client = client.get_s3_client()
 
-    object_path = '%s/%s' % (client.get_directory_name + object_name)
+    object_path = '%s/%s' % (client.get_directory_name() + object_name)
 
     # Upload the file
     try:
