@@ -26,8 +26,12 @@ def main():
     if client.get_s3_client() is not None:
         volumes_to_backup = client.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
+
+            metafile_exists = s3_util.check_if_object_exists('metafile', client)
+            if not metafile_exists:
+                s3_util.upload_file('metafile_base.json', client, 'metafile')
+
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
-            # If metafile does not exist in directory, generate metafile
             for vol in arr_volumes:
                 return
                 # Check if volume exists, if not throw error and move on

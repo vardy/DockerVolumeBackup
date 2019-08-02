@@ -21,9 +21,11 @@ def check_if_object_exists(object_name, client):
 
     s3_client = client.get_s3_client()
 
+    object_path = '%s/%s' % (client.get_directory_name + object_name)
+
     # Perform HEAD on object to check if it exists
     try:
-        s3_client.head_object(Bucket=client.get_bucket_name(), Key=object_name)
+        s3_client.head_object(Bucket=client.get_bucket_name(), Key=object_path)
     except ClientError as ex:
         if ex.response['Error']['Code'] == "404":
             return False
@@ -42,11 +44,13 @@ def delete_object(object_name, client):
 
     s3_client = client.get_s3_client()
 
+    object_path = '%s/%s' % (client.get_directory_name + object_name)
+
     # Delete the file
     try:
         response = s3_client.delete_object(
             Bucket=client.get_bucket_name(), 
-            Key=object_name
+            Key=object_path
         )
     except ClientError as ex:
         logging.error(ex)
@@ -68,10 +72,12 @@ def upload_file(file_name, client, object_name=None):
 
     s3_client = client.get_s3_client()
 
+    object_path = '%s/%s' % (client.get_directory_name + object_name)
+
     # Upload the file
     try:
         response = s3_client.upload_file(
-            file_name, client.get_bucket_name(), object_name, 
+            file_name, client.get_bucket_name(), object_path, 
             Callback=ProgressPercentage(file_name)
         )
     except ClientError as ex:
