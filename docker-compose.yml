@@ -1,0 +1,8 @@
+version: '2.0'
+
+services:
+  app:
+    image: docker_volume_backup
+    build: .
+    env_file:
+     - .env
