@@ -11,7 +11,6 @@ import os
 import sys
 import json
 import uuid
-import collections
 import logging
 import time
 from datetime import datetime
