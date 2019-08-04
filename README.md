@@ -7,3 +7,4 @@ Todo:
  - Check all S3 actions for success (returns true)
  - Document setup process
  - Upload image to DockerHub
+ - Option to run backup on startup
