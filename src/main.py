@@ -42,8 +42,8 @@ def main():
 
 
 def schedule_tasks():
-    snapshot_interval = os.getenv('snapshot_interval', 2)
-    schedule.every(int(snapshot_interval)).hours.do(backup)
+    snapshot_interval = config.get_snapshot_interval()
+    schedule.every(snapshot_interval).hours.do(backup)
 
 
 def backup():
@@ -101,7 +101,7 @@ def backup():
 
                     current_datetime = datetime.now().strftime('%Y-%m-%d-%H%M')
                     if metafile_json['volumes'][i]['snapshot_num'] - 1 > 0:
-                        if not metafile_json['volumes'][i]['snapshot_num'] > int(os.getenv('backup_interval')):
+                        if not metafile_json['volumes'][i]['snapshot_num'] > config.get_backup_interval():
                             response = s3.delete_directory(
                                 metafile_json['volumes'][i]['volume_name'] + '/' +
                                 metafile_json['volumes'][i]['current_snapshot_id'] + '_' +

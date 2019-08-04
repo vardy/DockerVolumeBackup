@@ -15,9 +15,11 @@ class Config:
     __S3_Access_Key = os.getenv('S3_Access_Key')
     __S3_Secret_Key = os.getenv('S3_Secret_Key')
     __S3_Bucket = os.getenv('S3_Bucket_Name')
-    __S3_Directory_Name = os.getenv('S3_Directory_Name')
+    __S3_Directory_Name = os.getenv('S3_Directory_Name', 'docker_backups')
     __Volumes_To_Backup = os.getenv('Volumes_To_Backup')
-    __Backup_On_Startup = os.getenv('backup_on_startup')
+    __Backup_On_Startup = os.getenv('backup_on_startup', 'yes')
+    __Snapshot_Interval = os.getenv('snapshot_interval', 2)
+    __Backup_Interval = os.getenv('backup_interval', 12)
 
     def get_s3_endpoint(self):
         return self.__S3_Endpoint
@@ -42,3 +44,9 @@ class Config:
 
     def get_do_backup_on_startup(self):
         return self.__Backup_On_Startup.__eq__('yes')
+
+    def get_snapshot_interval(self):
+        return int(self.__Snapshot_Interval)
+
+    def get_backup_interval(self):
+        return int(self.__Backup_Interval)
