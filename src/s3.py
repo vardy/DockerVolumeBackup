@@ -33,7 +33,7 @@ def check_if_object_exists(object_name, client):
     try:
         client.head_object(Bucket=config.get_bucket_name(), Key=object_path)
     except ClientError as ex:
-        if ex.response['Error']['Code'] == "404":
+        if ex.response['Error']['Code'].__eq__("404"):
             return False
         else:
             logging.error(ex)
