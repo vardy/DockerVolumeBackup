@@ -16,7 +16,6 @@ from botocore.exceptions import ClientError
 from utils.progress import ProgressPercentage
 from config.config import Config
 
-
 config = Config()
 
 
@@ -51,17 +50,13 @@ def delete_object(object_name, client, **kwargs):
     :return: True if file deleted, else False
     """
 
-    abs = False
+    absolute_path = False
     if kwargs is not None:
         for key, value in kwargs.items():
-            if key == 'abs_path':
-                if value == True:
-                    abs = True
+            if key == 'abs_path' and value:
+                absolute_path = True
 
-    if not abs:
-        object_path = '%s/%s' % (config.get_directory_name(), object_name)
-    else:
-        object_path = object_name
+    object_path = object_name if absolute_path else '%s/%s' % (config.get_directory_name(), object_name)
 
     # Delete the file
     try:
