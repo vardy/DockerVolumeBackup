@@ -22,7 +22,7 @@ import boto3  # S3 API interface
 # Local source
 from utils import logging_setup
 from config.config import Config
-import s3_util
+import s3
 
 
 def schedule_tasks():
@@ -57,16 +57,16 @@ def backup():
         volumes_to_backup = config.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
 
-            metafile_exists = s3_util.check_if_object_exists('metafile', s3_client)
+            metafile_exists = s3.check_if_object_exists('metafile', s3_client)
             if not metafile_exists:
-                s3_util.upload_file('metafile_base.json', s3_client, 'metafile')
+                s3.upload_file('metafile_base.json', s3_client, 'metafile')
 
             if not os.path.exists('temp'):
                 os.makedirs('temp')
 
             # Download metafile locally to be edited re-upload
             # once all backups have finished.
-            s3_util.download_object('metafile', s3_client, '/temp/metafile')
+            s3.download_object('metafile', s3_client, '/temp/metafile')
             with open('./temp/metafile') as metafile_bin:
                 metafile_json = json.load(metafile_bin)
                 metafile_bin.close()
@@ -96,7 +96,7 @@ def backup():
                     current_datetime = datetime.now().strftime('%Y-%m-%d-%H%M')
                     if metafile_json['volumes'][i]['snapshot_num'] - 1 > 0:
                         if not metafile_json['volumes'][i]['snapshot_num'] > int(os.getenv('backup_interval')):
-                            response = s3_util.delete_directory(
+                            response = s3.delete_directory(
                                 metafile_json['volumes'][i]['volume_name'] + '/' +
                                 metafile_json['volumes'][i]['current_snapshot_id'] + '_' +
                                 str(metafile_json['volumes'][i]['snapshot_num'] - 1),
@@ -105,7 +105,7 @@ def backup():
                         else:
                             metafile_json['volumes'][i]['current_snapshot_id'] = uuid.uuid4().hex
                             metafile_json['volumes'][i]['snapshot_num'] = 1
-                    response = s3_util.upload_file(file_path, s3_client, '%s/%s_%d_%s/%s' % (
+                    response = s3.upload_file(file_path, s3_client, '%s/%s_%d_%s/%s' % (
                         metafile_json['volumes'][i]['volume_name'],
                         metafile_json['volumes'][i]['current_snapshot_id'],
                         metafile_json['volumes'][i]['snapshot_num'],
@@ -119,7 +119,7 @@ def backup():
 
             # Upload new metafile from temp filesystem to S3 for use
             # in next backup.
-            response = s3_util.upload_file(
+            response = s3.upload_file(
                 './temp/metafile',
                 s3_client,
                 'metafile'
