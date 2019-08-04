@@ -29,9 +29,9 @@ def validate_json(json_obj):
             logging.critical('Too few elements in an object in the \'volumes\' array (3 elements expected)')
             sys.exit(1)
         for key in obj.keys():
-            f1 = key.__eq__('volume_name')
-            f2 = key.__eq__('current_snapshot_id')
-            f3 = key.__eq__('snapshot_num')
+            f1 = key == 'volume_name'
+            f2 = key == 'current_snapshot_id'
+            f3 = key == 'snapshot_num'
             if (not f1) and (not f2) and (not f3):
                 logging.critical('Unexpected element found in an object in the \'volumes\' array')
                 logging.critical('Unexpected key: %s' % key)

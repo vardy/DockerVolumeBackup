@@ -43,7 +43,7 @@ class Config:
         return self.__Volumes_To_Backup
 
     def get_do_backup_on_startup(self):
-        return self.__Backup_On_Startup.__eq__('yes')
+        return self.__Backup_On_Startup == 'yes'
 
     def get_snapshot_interval(self):
         return int(self.__Snapshot_Interval)

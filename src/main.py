@@ -67,7 +67,7 @@ def backup():
 
     if s3_client is not None:
         volumes_to_backup = config.get_volumes_to_backup()
-        if not ''.__eq__(volumes_to_backup):
+        if not '' == volumes_to_backup:
 
             # Adding metafile to S3 directory if it does not already exist
             # stores data relevant to tracking snapshot/backup progress
@@ -94,7 +94,7 @@ def backup():
                 if vol in os.listdir('/HostVolumeData'):
                     found = False
                     for i in range(0, len(meta_vols)):
-                        if meta_vols[i]['volume_name'].__eq__(vol):
+                        if meta_vols[i]['volume_name'] == vol:
                             # Volume exists in both metafile and filesystem
                             found = True
                     if not found:
