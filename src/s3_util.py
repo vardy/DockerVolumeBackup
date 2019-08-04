@@ -16,6 +16,7 @@ from botocore.exceptions import ClientError
 # Local source
 from progress import ProgressPercentage
 
+
 def check_if_object_exists(object_name, client):
     """ Check if a object exists in an S3 bucket
 
@@ -39,6 +40,7 @@ def check_if_object_exists(object_name, client):
             return
     else:
         return True
+
 
 def delete_object(object_name, client, **kwargs):
     """ Delete an object in an S3 bucket
@@ -65,13 +67,14 @@ def delete_object(object_name, client, **kwargs):
     # Delete the file
     try:
         response = s3_client.delete_object(
-            Bucket=client.get_bucket_name(), 
+            Bucket=client.get_bucket_name(),
             Key=object_path
         )
     except ClientError as ex:
         logging.error(ex)
         return False
     return True
+
 
 def upload_file(file_name, client, object_name=None):
     """ Upload a file to an S3 bucket
@@ -93,13 +96,14 @@ def upload_file(file_name, client, object_name=None):
     # Upload the file
     try:
         response = s3_client.upload_file(
-            file_name, client.get_bucket_name(), object_path, 
+            file_name, client.get_bucket_name(), object_path,
             Callback=ProgressPercentage(file_name)
         )
     except ClientError as ex:
         logging.error(ex)
         return False
     return True
+
 
 def download_object(object_name, client, file_name=None):
     """ Download an object from an S3 bucket
@@ -112,7 +116,7 @@ def download_object(object_name, client, file_name=None):
 
     if file_name is None:
         file_name = object_name
-    
+
     s3_client = client.get_s3_client()
 
     object_path = '%s/%s' % (client.get_directory_name(), object_name)
@@ -122,14 +126,15 @@ def download_object(object_name, client, file_name=None):
     # Download the file
     try:
         response = s3_client.download_file(
-            Bucket=client.get_bucket_name(), 
-            Key=object_path, 
+            Bucket=client.get_bucket_name(),
+            Key=object_path,
             Filename=file_path
         )
     except ClientError as ex:
         logging.error(ex)
         return False
     return True
+
 
 def list_objects_in_dir(dir_name, client):
     """ Lists objects in specified directory in S3
@@ -143,6 +148,7 @@ def list_objects_in_dir(dir_name, client):
         Bucket=client.get_bucket_name(),
         Prefix=dir_name
     )
+
 
 def delete_directory(directory_path, client):
     """ Delete all objects in S3 directory
