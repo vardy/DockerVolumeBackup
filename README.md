@@ -6,4 +6,4 @@ Todo:
  - Check all S3 actions for success (returns true)
  - Document setup process
  - Upload image to DockerHub
- - Is it safe to terminate at any point in the process?
+ - Is it safe to terminate at any point in the process? (use atexit?)
