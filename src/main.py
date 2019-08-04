@@ -11,6 +11,7 @@ import os
 import sys
 import json
 import uuid
+import collections
 import logging
 import time
 from datetime import datetime
@@ -21,6 +22,7 @@ import boto3  # S3 API interface
 
 # Local source
 from utils import logging_setup
+from utils import validator
 from config.config import Config
 import s3
 
@@ -46,6 +48,10 @@ def schedule_tasks():
     schedule.every(snapshot_interval).hours.do(backup)
 
 
+def gen_uuid():
+    return uuid.uuid4().hex[:6]
+
+
 def backup():
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
@@ -63,63 +69,75 @@ def backup():
         volumes_to_backup = config.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
 
+            # Adding metafile to S3 directory if it does not already exist
+            # stores data relevant to tracking snapshot/backup progress
             if not s3.check_if_object_exists('metafile', s3_client):
                 s3.upload_file('metafile_base.json', s3_client, 'metafile')
 
+            # Generating temporary directory
             if not os.path.exists('temp'):
                 os.makedirs('temp')
 
-            # Download metafile locally to be edited re-upload
-            # once all backups have finished.
+            # Download metafile locally to temporary directory, to be edited and
+            # re-uploaded once all backups have finished.
             s3.download_object('metafile', s3_client, '/temp/metafile')
             with open('./temp/metafile') as metafile_bin:
                 metafile_json = json.load(metafile_bin)
                 metafile_bin.close()
 
+            validator.validate_json(metafile_json)
+            meta_vols = metafile_json['volumes']
+
+            # Check if each volume listed in environment variables exists within host filesystem
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
             for vol in arr_volumes:
                 if vol in os.listdir('/HostVolumeData'):
                     found = False
-                    for i in range(0, len(metafile_json['volumes'])):
-                        if metafile_json['volumes'][i]['volume_name'].__eq__(vol):
+                    for i in range(0, len(meta_vols)):
+                        if meta_vols[i]['volume_name'].__eq__(vol):
+                            # Volume exists in both metafile and filesystem
                             found = True
                     if not found:
                         # Volume exists but is not in metafile
-                        metafile_json['volumes'].append({
+                        # Add to metafile
+                        meta_vols.append({
                             'volume_name': vol,
-                            'current_snapshot_id': uuid.uuid4().hex,
+                            'current_snapshot_id': gen_uuid(),
                             'snapshot_num': 0
                         })
                 else:
-                    logging.error('Volume from env \'%s\' is not in host\'s Docker filesystem.' % (vol))
+                    logging.error('Volume \'%s\' is not in host\'s Docker filesystem.' % vol)
 
-            for i in range(0, len(metafile_json['volumes'])):
-                metafile_json['volumes'][i]['snapshot_num'] = metafile_json['volumes'][i]['snapshot_num'] + 1
-                for file_name in os.listdir('/HostVolumeData/%s/_data/' % (metafile_json['volumes'][i]['volume_name'])):
-                    file_path = '/HostVolumeData/%s/_data/%s' % (metafile_json['volumes'][i]['volume_name'], file_name)
+            for i in range(0, len(meta_vols)):
+                meta_obj = meta_vols[i]
+                meta_obj['snapshot_num'] = meta_obj['snapshot_num'] + 1
+                vol_name = meta_obj['volume_name']
+                for file_name in os.listdir('/HostVolumeData/%s/_data/' % vol_name):
+                    file_path = '/HostVolumeData/%s/_data/%s' % (vol_name, file_name)
 
-                    current_datetime = datetime.now().strftime('%Y-%m-%d-%H%M')
-                    if metafile_json['volumes'][i]['snapshot_num'] - 1 > 0:
-                        if not metafile_json['volumes'][i]['snapshot_num'] > config.get_backup_interval():
+                    if meta_obj['snapshot_num'] - 1 > 0:
+                        if not meta_obj['snapshot_num'] > config.get_backup_interval():
                             response = s3.delete_directory(
-                                metafile_json['volumes'][i]['volume_name'] + '/' +
-                                metafile_json['volumes'][i]['current_snapshot_id'] + '_' +
-                                str(metafile_json['volumes'][i]['snapshot_num'] - 1),
+                                '%s/%s_%d' % (
+                                    meta_obj['volume_name'],
+                                    meta_obj['current_snapshot_id'],
+                                    meta_obj['snapshot_num'] - 1
+                                ),
                                 s3_client
                             )
                         else:
-                            metafile_json['volumes'][i]['current_snapshot_id'] = uuid.uuid4().hex
-                            metafile_json['volumes'][i]['snapshot_num'] = 1
+                            meta_obj['current_snapshot_id'] = gen_uuid()
+                            meta_obj['snapshot_num'] = 1
                     response = s3.upload_file(file_path, s3_client, '%s/%s_%d_%s/%s' % (
-                        metafile_json['volumes'][i]['volume_name'],
-                        metafile_json['volumes'][i]['current_snapshot_id'],
-                        metafile_json['volumes'][i]['snapshot_num'],
-                        current_datetime,
+                        meta_obj['volume_name'],
+                        meta_obj['current_snapshot_id'],
+                        meta_obj['snapshot_num'],
+                        datetime.now().strftime('%Y-%m-%d-%H%M'),
                         file_name
                     ))
 
             # Write new metafile json to temp filesystem
-            with open('./temp/metafile', 'w') as json_bin:
+            with open('./temp/metafile', 'w+') as json_bin:
                 json.dump(metafile_json, json_bin, indent=4)
 
             # Upload new metafile from temp filesystem to S3 for use
