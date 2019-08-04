@@ -8,9 +8,10 @@
 import os
 import logging
 
-log_level = os.environ.get('Log_Level', 'INFO').upper()
+def setup():
+    log_level = os.environ.get('Log_Level', 'INFO').upper()
 
-logging.basicConfig(
-    format='%(asctime)s: %(levelname)s: %(message)s', 
-    level=log_level
-)
+    logging.basicConfig(
+        format='%(asctime)s: %(levelname)s: %(message)s',
+        level=log_level
+    )

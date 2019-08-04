@@ -24,7 +24,20 @@ import s3_util
 from client import Client
 
 
+def schedule_tasks():
+    snapshot_interval = os.getenv('snapshot_interval', 2)
+    schedule.every(snapshot_interval).hours.do(backup)
+
+
 def main():
+    logging_setup.setup()
+    schedule_tasks()
+    while True:
+        schedule.run_pending()
+        time.sleep(30)
+
+
+def backup():
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
 
