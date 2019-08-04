@@ -10,6 +10,7 @@ import os
 import sys
 import threading
 
+
 class ProgressPercentage(object):
 
     def __init__(self, filename):

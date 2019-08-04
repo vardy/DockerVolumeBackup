@@ -24,25 +24,31 @@ from utils import logging_setup
 from config.config import Config
 import s3
 
-
-def schedule_tasks():
-    snapshot_interval = os.getenv('snapshot_interval', 2)
-    schedule.every(snapshot_interval).hours.do(backup)
+config = Config()
 
 
 def main():
     logging_setup.setup()
     schedule_tasks()
+    logging.info('Tasks scheduled')
+    if config.get_do_backup_on_startup():
+        logging.info('Running scheduled tasks...')
+        schedule.run_all(0)
+    logging.info('Tasks: %s' % schedule.jobs)
     while True:
+        logging.info('Running pending tasks...')
         schedule.run_pending()
         time.sleep(30)
+
+
+def schedule_tasks():
+    snapshot_interval = os.getenv('snapshot_interval', 2)
+    schedule.every(int(snapshot_interval)).hours.do(backup)
 
 
 def backup():
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
-
-    config = Config()
 
     session = boto3.session.Session()
     s3_client = session.client(
@@ -50,7 +56,7 @@ def backup():
         aws_access_key_id=config.get_s3_access_key(),
         aws_secret_access_key=config.get_s3_secret_key(),
         region_name=config.get_s3_region(),
-        endpoint_url=config.get_s3_region(),
+        endpoint_url=config.get_s3_endpoint(),
     )
 
     if s3_client is not None:

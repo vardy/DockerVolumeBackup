@@ -8,6 +8,7 @@
 import os
 import logging
 
+
 def setup():
     log_level = os.environ.get('Log_Level', 'INFO').upper()
 

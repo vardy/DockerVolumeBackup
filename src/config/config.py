@@ -17,6 +17,7 @@ class Config:
     __S3_Bucket = os.getenv('S3_Bucket_Name')
     __S3_Directory_Name = os.getenv('S3_Directory_Name')
     __Volumes_To_Backup = os.getenv('Volumes_To_Backup')
+    __Backup_On_Startup = os.getenv('backup_on_startup')
 
     def get_s3_endpoint(self):
         return self.__S3_Endpoint
@@ -38,3 +39,6 @@ class Config:
 
     def get_volumes_to_backup(self):
         return self.__Volumes_To_Backup
+
+    def get_do_backup_on_startup(self):
+        return self.__Backup_On_Startup.__eq__('yes')
