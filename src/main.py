@@ -63,8 +63,7 @@ def backup():
         volumes_to_backup = config.get_volumes_to_backup()
         if not ''.__eq__(volumes_to_backup):
 
-            metafile_exists = s3.check_if_object_exists('metafile', s3_client)
-            if not metafile_exists:
+            if not s3.check_if_object_exists('metafile', s3_client):
                 s3.upload_file('metafile_base.json', s3_client, 'metafile')
 
             if not os.path.exists('temp'):
