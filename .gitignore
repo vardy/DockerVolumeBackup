@@ -1,2 +1,5 @@
 # Secrets
 .env
+
+# IDE Files
+.idea
