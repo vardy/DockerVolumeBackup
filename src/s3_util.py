@@ -7,31 +7,32 @@
 
 # Standard library
 import logging
-import pprint
 import os
 
 # Third party libraries
 from botocore.exceptions import ClientError
 
 # Local source
-from progress import ProgressPercentage
+from utils.progress import ProgressPercentage
+from config.config import Config
+
+
+config = Config()
 
 
 def check_if_object_exists(object_name, client):
     """ Check if a object exists in an S3 bucket
 
     :param object_name: Object name in bucket to check
-    :param client: Client object
+    :param client: S3 client object
     :return: True if file exists, else False
     """
 
-    s3_client = client.get_s3_client()
-
-    object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    object_path = '%s/%s' % (config.get_directory_name(), object_name)
 
     # Perform HEAD on object to check if it exists
     try:
-        s3_client.head_object(Bucket=client.get_bucket_name(), Key=object_path)
+        client.head_object(Bucket=config.get_bucket_name(), Key=object_path)
     except ClientError as ex:
         if ex.response['Error']['Code'] == "404":
             return False
@@ -46,7 +47,7 @@ def delete_object(object_name, client, **kwargs):
     """ Delete an object in an S3 bucket
 
     :param object_name: Object name in bucket to delete
-    :param client: Client object
+    :param client: S3 client object
     :return: True if file deleted, else False
     """
 
@@ -57,17 +58,15 @@ def delete_object(object_name, client, **kwargs):
                 if value == True:
                     abs = True
 
-    s3_client = client.get_s3_client()
-
     if not abs:
-        object_path = '%s/%s' % (client.get_directory_name(), object_name)
+        object_path = '%s/%s' % (config.get_directory_name(), object_name)
     else:
         object_path = object_name
 
     # Delete the file
     try:
-        response = s3_client.delete_object(
-            Bucket=client.get_bucket_name(),
+        response = client.delete_object(
+            Bucket=config.get_bucket_name(),
             Key=object_path
         )
     except ClientError as ex:
@@ -80,7 +79,7 @@ def upload_file(file_name, client, object_name=None):
     """ Upload a file to an S3 bucket
 
     :param file_name: File to upload
-    :param client: Client object
+    :param client: S3 client object
     :param object_name: S3 object name. If not specified then file_name is used
     :return: True if file was uploaded, else False
     """
@@ -89,14 +88,12 @@ def upload_file(file_name, client, object_name=None):
     if object_name is None:
         object_name = file_name
 
-    s3_client = client.get_s3_client()
-
-    object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    object_path = '%s/%s' % (config.get_directory_name(), object_name)
 
     # Upload the file
     try:
-        response = s3_client.upload_file(
-            file_name, client.get_bucket_name(), object_path,
+        response = client.upload_file(
+            file_name, config.get_bucket_name(), object_path,
             Callback=ProgressPercentage(file_name)
         )
     except ClientError as ex:
@@ -109,7 +106,7 @@ def download_object(object_name, client, file_name=None):
     """ Download an object from an S3 bucket
 
     :param object_name: Object to download
-    :param client: Client object
+    :param client: S3 Client object
     :param file_name: Name of file to save
     :return: True if downloaded, else False
     """
@@ -117,16 +114,14 @@ def download_object(object_name, client, file_name=None):
     if file_name is None:
         file_name = object_name
 
-    s3_client = client.get_s3_client()
-
-    object_path = '%s/%s' % (client.get_directory_name(), object_name)
+    object_path = '%s/%s' % (config.get_directory_name(), object_name)
     root_dir_path = os.path.abspath(os.curdir)
     file_path = root_dir_path + file_name
 
     # Download the file
     try:
-        response = s3_client.download_file(
-            Bucket=client.get_bucket_name(),
+        response = client.download_file(
+            Bucket=config.get_bucket_name(),
             Key=object_path,
             Filename=file_path
         )
@@ -140,12 +135,12 @@ def list_objects_in_dir(dir_name, client):
     """ Lists objects in specified directory in S3
 
     :param dir_name: The directory to list recursively from
-    :param client: Client object
+    :param client: S3 client object
     :return: Dictionary response
     """
 
-    return client.get_s3_client().list_objects_v2(
-        Bucket=client.get_bucket_name(),
+    return client.list_objects_v2(
+        Bucket=config.get_bucket_name(),
         Prefix=dir_name
     )
 
@@ -154,7 +149,7 @@ def delete_directory(directory_path, client):
     """ Delete all objects in S3 directory
 
     :param directory_path: Path to directory to delete
-    :param client: Client object
+    :param client: S3 client object
     :return: True if deleted successfully, else False
     """
 
