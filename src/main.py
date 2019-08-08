@@ -47,7 +47,8 @@ def main():
 
 def schedule_tasks():
     snapshot_interval = config.get_snapshot_interval()
-    schedule.every(snapshot_interval).hours.do(backup)
+    #schedule.every(snapshot_interval).hours.do(backup)
+    schedule.every(10).seconds.do(backup)
 
 
 def gen_uuid():
@@ -66,14 +67,6 @@ def backup():
         region_name=config.get_s3_region(),
         endpoint_url=config.get_s3_endpoint(),
     )
-
-    s3_resource = session.resource(
-        service_name='s3',
-        aws_access_key_id=config.get_s3_access_key(),
-        aws_secret_access_key=config.get_s3_secret_key(),
-        region_name=config.get_s3_region(),
-        endpoint_url=config.get_s3_endpoint()
-   )
 
     if s3_client is not None:
         volumes_to_backup = config.get_volumes_to_backup()
@@ -172,16 +165,22 @@ def backup():
                         snap_num_alt = meta_obj['snapshot_num'] - 1
 
                         # Copy file to new object name and then delete old version
-                        s3_resource.Object(config.get_bucket_name(), '%s/%s/BACKUP_%s.tar.gz' % (
-                                config.get_directory_name(),
-                                vol,
-                                datetime.now().strftime('%Y%m%d-%H%M')
-                            ))\
-                            .copy_from(CopySource='%s/%s' % (
-                                config.get_bucket_name(), s3.get_key_from_prefix('%s/%s/SNAPSHOT_%s_%d' % (
-                                    config.get_directory_name(), vol, snap_id, snap_num_alt
-                                ), s3_client)
-                            ))
+                        s3_client.copy(  # From here
+                                       {
+                                           'Bucket': config.get_bucket_name(),
+                                           'Key': s3.get_key_from_prefix('%s/%s/SNAPSHOT_%s_%d' % (
+                                                          config.get_directory_name(), vol, snap_id, snap_num_alt
+                                                      ), s3_client
+                                                  )
+                                       },
+                                       # To here
+                                       config.get_bucket_name(),
+                                       '%s/%s/BACKUP_%s.tar.gz' % (
+                                           config.get_directory_name(),
+                                           vol,
+                                           datetime.now().strftime('%Y%m%d-%H%M')
+                                       )
+                        )
                         s3.delete_objects_by_prefix('%s/SNAPSHOT_%s_%d' % (vol, snap_id, snap_num_alt), s3_client)
 
                         meta_obj['current_snapshot_id'] = gen_uuid()
