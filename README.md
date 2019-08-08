@@ -14,3 +14,4 @@ Todo:
  - Pass about filestreams as file objects instead of temporary files
    - Move metafile_base into code
  - Add JSON validation via flexible file schemas instead of hardcoded
+ - Use hyphens instead of underscores
