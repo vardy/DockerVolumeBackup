@@ -77,9 +77,9 @@ def backup():
             # {
             #     "volumes": [
             #         {
-            #             "volume_name": "",
-            #             "current_snapshot_id": "",
-            #             "snapshot_num": ""
+            #             "volume_name": "project_data-db",
+            #             "current_snapshot_id": "b0ca9r",
+            #             "snapshot_num": 4
             #         },
             #         ...
             #     ]
