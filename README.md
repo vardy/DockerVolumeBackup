@@ -9,4 +9,4 @@ Todo:
  - Is it safe to terminate at any point in the process? (use atexit?)
  - 'Cleanup' and 'Compress' functionality that checks whether there are no new 
  changes in a backup and compresses if there are none
- - Figure out sorting by backup date
+ - Remove snapshot ID from schema
