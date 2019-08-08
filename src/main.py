@@ -79,6 +79,19 @@ def backup():
         volumes_to_backup = config.get_volumes_to_backup()
         if not '' == volumes_to_backup:
 
+            # # # Metafile schema
+            #
+            # {
+            #     "volumes": [
+            #         {
+            #             "volume_name": "",
+            #             "current_snapshot_id": "",
+            #             "snapshot_num": ""
+            #         },
+            #         ...
+            #     ]
+            # }
+
             # Adding metafile to S3 directory if it does not already exist
             # stores data relevant to tracking snapshot/backup progress
             if not s3.check_if_object_exists('metafile', s3_client):
@@ -118,6 +131,17 @@ def backup():
                 else:
                     logging.error('Volume \'%s\' is not in host\'s Docker filesystem.' % vol)
 
+            # # # S3 directory structure
+            #
+            # env_bucket_name/
+            #     env_directory_name/
+            #         metafile
+            #         volume_name/
+            #             BACKUP_<date-time>.tar.gz
+            #             BACKUP_<date-time>.tar.gz
+            #             ...
+            #             SNAPSHOT_<snapshot-id>_<snapshot-number>_<date-time>.tar.gz
+
             for i in range(0, len(meta_vols)):
                 meta_obj = meta_vols[i]
                 meta_obj['snapshot_num'] = meta_obj['snapshot_num'] + 1
@@ -148,11 +172,9 @@ def backup():
                         snap_num_alt = meta_obj['snapshot_num'] - 1
 
                         # Copy file to new object name and then delete old version
-                        s3_resource.Object(config.get_bucket_name(), '%s/%s/BACKUP_%s_%d_%s' % (
+                        s3_resource.Object(config.get_bucket_name(), '%s/%s/BACKUP_%s.tar.gz' % (
                                 config.get_directory_name(),
                                 vol,
-                                snap_id,
-                                snap_num_alt,
                                 datetime.now().strftime('%Y%m%d-%H%M')
                             ))\
                             .copy_from(CopySource='%s/%s' % (
