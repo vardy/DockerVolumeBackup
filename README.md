@@ -7,6 +7,6 @@ Todo:
  - Document setup process
  - Upload image to DockerHub
  - Is it safe to terminate at any point in the process? (use atexit?)
- - Add 'snapshot' and 'backup' prefixes to backups and snapshots
  - 'Cleanup' and 'Compress' functionality that checks whether there are no new 
  changes in a backup and compresses if there are none
+ - Figure out sorting by backup date
