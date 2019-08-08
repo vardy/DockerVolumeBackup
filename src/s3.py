@@ -58,7 +58,7 @@ def delete_object(object_name, client, **kwargs):
 
     object_path = object_name if absolute_path else '%s/%s' % (config.get_directory_name(), object_name)
 
-    # Delete the file
+    # Delete the object
     try:
         response = client.delete_object(
             Bucket=config.get_bucket_name(),
@@ -68,6 +68,30 @@ def delete_object(object_name, client, **kwargs):
         logging.error(ex)
         return False
     return True
+
+
+def delete_objects_by_prefix(prefix, client, **kwargs):
+    """ Delete an object in an S3 bucket by its specified prefix
+
+    :param prefix: Partial of object's key
+    :param client: S3 client object
+    :return: True if file deleted, else False
+    """
+
+    absolute_path = False
+    if kwargs is not None:
+        for key, value in kwargs.items():
+            if key == 'abs_path' and value:
+                absolute_path = True
+
+    object_path = prefix if absolute_path else '%s/%s' % (config.get_directory_name(), prefix)
+
+    # Delete all object matching prefix
+    for element in list_objects_in_dir(object_path, client)['Contents']:
+        try:
+            delete_object(element['Key'], client, abs_path=True)
+        except ClientError as ex:
+            logging.error(ex)
 
 
 def upload_file(file_name, client, object_name=None):
@@ -155,3 +179,19 @@ def delete_directory(directory_path, client):
     except KeyError as ex:
         return
     return
+
+
+def get_key_from_prefix(prefix, client):
+    """ Get object's key from its prefix (first found)
+
+    :param prefix: Prefix of key to find
+    :param client: S3 client object
+    :return: True if deleted successfully, else False
+    """
+
+    try:
+        for element in list_objects_in_dir(prefix, client)['Contents']:
+            # Return first key
+            return element['Key']
+    except KeyError as ex:
+        logging.error(ex)
