@@ -147,9 +147,6 @@ def backup():
                         snap_id = meta_obj['current_snapshot_id']
                         snap_num_alt = meta_obj['snapshot_num'] - 1
 
-                        prefix = 'docker_backups/loyalbot_db-data/ca5d7b_3'
-                        logging.info(s3.get_key_from_prefix(prefix, s3_client))
-
                         # Copy file to new object name and then delete old version
                         s3_resource.Object(config.get_bucket_name(), '%s/%s/BACKUP_%s_%d_%s' % (
                                 config.get_directory_name(),
