@@ -15,3 +15,4 @@ Todo:
    - Move metafile_base into code
  - Add JSON validation via flexible file schemas instead of hardcoded
  - Use hyphens instead of underscores
+ - Investigate using object tagging instead of having data in object names
