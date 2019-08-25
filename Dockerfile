@@ -1,4 +1,5 @@
 FROM python:3
+MAINTAINER Jarred Vardy <jarred.vardy@gmail.com>
 
 WORKDIR /DockerVolumeBackup
 
