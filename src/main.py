@@ -9,8 +9,6 @@
 # Standard library
 import os
 import sys
-import json
-import uuid
 import logging
 import tarfile
 import time
@@ -27,8 +25,6 @@ from config.config import Config
 import s3
 
 config = Config()
-temp_tarfile_path = './temp/archive_build.tar.gz'
-temp_metafile_path = './temp/metafile'
 
 
 def main():
@@ -51,10 +47,6 @@ def schedule_tasks():
     schedule.every(10).seconds.do(backup)
 
 
-def gen_uuid():
-    return uuid.uuid4().hex[:6]
-
-
 def backup():
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
@@ -72,137 +64,78 @@ def backup():
         volumes_to_backup = config.get_volumes_to_backup()
         if not '' == volumes_to_backup:
 
-            # # # Metafile schema
-            #
-            # {
-            #     "volumes": [
-            #         {
-            #             "volume_name": "project_data-db",
-            #             "current_snapshot_id": "b0ca9r",
-            #             "snapshot_num": 4
-            #         },
-            #         ...
-            #     ]
-            # }
-
-            # Adding metafile to S3 directory if it does not already exist
-            # stores data relevant to tracking snapshot/backup progress
-            if not s3.check_if_object_exists('metafile', s3_client):
-                s3.upload_file('metafile_base.json', s3_client, 'metafile')
-
             # Generating temporary directory
             if not os.path.exists('temp'):
                 os.makedirs('temp')
 
-            # Download metafile locally to temporary directory, to be edited and
-            # re-uploaded once all backups have finished.
-            s3.download_object('metafile', s3_client, '/temp/metafile')
-            with open(temp_metafile_path) as metafile_bin:
-                metafile_json = json.load(metafile_bin)
-                metafile_bin.close()
-
-            validator.validate_json(metafile_json)
-            meta_vols = metafile_json['volumes']
-
             # Check if each volume listed in environment variables exists within host filesystem
             arr_volumes = [x.strip() for x in volumes_to_backup.split(',')]
             for vol in arr_volumes:
-                if vol in os.listdir('/HostVolumeData'):
-                    found = False
-                    for i in range(0, len(meta_vols)):
-                        if meta_vols[i]['volume_name'] == vol:
-                            # Volume exists in both metafile and filesystem
-                            found = True
-                    if not found:
-                        # Volume exists but is not in metafile
-                        # Add to metafile
-                        meta_vols.append({
-                            'volume_name': vol,
-                            'current_snapshot_id': gen_uuid(),
-                            'snapshot_num': 0
-                        })
-                else:
+                if vol not in os.listdir('/HostVolumeData'):
+                    arr_volumes.remove(vol)
                     logging.error('Volume \'%s\' is not in host\'s Docker filesystem.' % vol)
 
             # # # S3 directory structure
             #
             # env_bucket_name/
             #     env_directory_name/
-            #         metafile
             #         volume_name/
             #             BACKUP_<date-time>.tar.gz
             #             BACKUP_<date-time>.tar.gz
             #             ...
-            #             SNAPSHOT_<snapshot-id>_<snapshot-number>_<date-time>.tar.gz
-
-            for i in range(0, len(meta_vols)):
-                meta_obj = meta_vols[i]
-                meta_obj['snapshot_num'] = meta_obj['snapshot_num'] + 1
-                vol_name = meta_obj['volume_name']
+            #             SNAPSHOT_<snapshot-number>.tar.gz
+            for vol_name in arr_volumes:
 
                 # Open archive file to pack backup data into
-                tar = tarfile.open(temp_tarfile_path, 'w:gz')
+                tar = tarfile.open('./temp/archive_build.tar.gz', 'w:gz')
                 for file_name in os.listdir('/HostVolumeData/%s/_data/' % vol_name):
                     # File name to archive
                     file_path = '/HostVolumeData/%s/_data/%s' % (vol_name, file_name)
                     tar.add(file_path, arcname=file_name)
-
                 tar.close()
-                if meta_obj['snapshot_num'] - 1 > 0:
-                    if not meta_obj['snapshot_num'] > config.get_backup_interval():
+
+                latest_snapshot_path = s3.get_key_from_prefix(
+                    '%s/%s/SNAPSHOT-' % (config.get_directory_name(), vol_name), 
+                    s3_client
+                )
+                if latest_snapshot_path is not False:
+                    latest_snapshot_number = latest_snapshot_path[
+                        latest_snapshot_path.index('SNAPSHOT-') + len('SNAPSHOT-'):-7
+                    ]
+                else:
+                    latest_snapshot_number = 0
+
+                if int(latest_snapshot_number) > 0:
+                    if not int(latest_snapshot_number) + 1 > config.get_backup_interval():
                         response = s3.delete_objects_by_prefix(
-                            '%s/SNAPSHOT_%s_%d' % (
-                                meta_obj['volume_name'],
-                                meta_obj['current_snapshot_id'],
-                                meta_obj['snapshot_num'] - 1
-                            ),
+                            '%s/SNAPSHOT-' % vol_name,
                             s3_client
                         )
                     else:
-                        # Rename last snapshot to be 'backup'
-                        vol = meta_obj['volume_name']
-                        snap_id = meta_obj['current_snapshot_id']
-                        snap_num_alt = meta_obj['snapshot_num'] - 1
-
                         # Copy file to new object name and then delete old version
                         s3_client.copy(  # From here
                                        {
                                            'Bucket': config.get_bucket_name(),
-                                           'Key': s3.get_key_from_prefix('%s/%s/SNAPSHOT_%s_%d' % (
-                                                          config.get_directory_name(), vol, snap_id, snap_num_alt
+                                           'Key': s3.get_key_from_prefix('%s/%s/SNAPSHOT-' % (
+                                                          config.get_directory_name(), vol_name
                                                       ), s3_client
                                                   )
                                        },
                                        # To here
                                        config.get_bucket_name(),
-                                       '%s/%s/BACKUP_%s.tar.gz' % (
+                                       '%s/%s/BACKUP-%s.tar.gz' % (
                                            config.get_directory_name(),
-                                           vol,
-                                           datetime.now().strftime('%Y%m%d-%H%M')
+                                           vol_name,
+                                           datetime.now().strftime('%Y%m%d-%H%M%S')
                                        )
                         )
-                        s3.delete_objects_by_prefix('%s/SNAPSHOT_%s_%d' % (vol, snap_id, snap_num_alt), s3_client)
+                        s3.delete_objects_by_prefix('%s/SNAPSHOT-' % vol_name, s3_client)
+                        latest_snapshot_number = '0'
 
-                        meta_obj['current_snapshot_id'] = gen_uuid()
-                        meta_obj['snapshot_num'] = 1
-                response = s3.upload_file(temp_tarfile_path, s3_client, '%s/SNAPSHOT_%s_%d_%s.tar.gz' % (
-                    meta_obj['volume_name'],
-                    meta_obj['current_snapshot_id'],
-                    meta_obj['snapshot_num'],
-                    datetime.now().strftime('%Y%m%d-%H%M')
+                response = s3.upload_file('./temp/archive_build.tar.gz', s3_client, '%s/SNAPSHOT-%s.tar.gz' % (
+                    vol_name,
+                    str(int(latest_snapshot_number) + 1)
                 ))
-
-            # Write new metafile json to temp filesystem
-            with open(temp_metafile_path, 'w+') as json_bin:
-                json.dump(metafile_json, json_bin, indent=4)
-
-            # Upload updated metafile from temp filesystem to S3 for use
-            # in next backup.
-            response = s3.upload_file(
-                temp_metafile_path,
-                s3_client,
-                'metafile'
-            )
         else:
             logging.critical('No volumes were specified.')
             sys.exit(1)

@@ -195,3 +195,4 @@ def get_key_from_prefix(prefix, client):
             return element['Key']
     except KeyError as ex:
         logging.error(ex)
+        return False
