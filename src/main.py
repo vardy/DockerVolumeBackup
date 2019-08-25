@@ -43,8 +43,8 @@ def main():
 
 def schedule_tasks():
     snapshot_interval = config.get_snapshot_interval()
-    #schedule.every(snapshot_interval).hours.do(backup)
-    schedule.every(10).seconds.do(backup)
+    schedule.every(snapshot_interval).hours.do(backup)
+    #schedule.every(10).seconds.do(backup)
 
 
 def backup():
