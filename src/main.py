@@ -20,7 +20,6 @@ import boto3  # S3 API interface
 
 # Local source
 from utils import logging_setup
-from utils import validator
 from config.config import Config
 import s3
 
