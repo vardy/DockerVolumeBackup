@@ -104,6 +104,11 @@ def backup():
                 else:
                     latest_snapshot_number = 0
 
+                response = s3.upload_file('./temp/archive_build.tar.gz', s3_client, '%s/SNAPSHOT-%s.tar.gz' % (
+                    vol_name,
+                    str(int(latest_snapshot_number) + 1)
+                ))
+
                 if int(latest_snapshot_number) > 0:
                     if not int(latest_snapshot_number) + 1 > config.get_backup_interval():
                         response = s3.delete_objects_by_prefix(
@@ -130,11 +135,6 @@ def backup():
                         )
                         s3.delete_objects_by_prefix('%s/SNAPSHOT-' % vol_name, s3_client)
                         latest_snapshot_number = '0'
-
-                response = s3.upload_file('./temp/archive_build.tar.gz', s3_client, '%s/SNAPSHOT-%s.tar.gz' % (
-                    vol_name,
-                    str(int(latest_snapshot_number) + 1)
-                ))
         else:
             logging.critical('No volumes were specified.')
             sys.exit(1)
