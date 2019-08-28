@@ -47,6 +47,9 @@ def schedule_tasks():
 
 
 def backup():
+    if os.getenv('Disabled') == 'yes':
+        return
+
     logging.info('Contents of host volumes directory...')
     logging.info(os.listdir('/HostVolumeData'))
 
