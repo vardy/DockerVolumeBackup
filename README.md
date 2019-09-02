@@ -59,7 +59,7 @@ Edit the image name to include the latest version (with no leading 'v').
 [GitHub Package Registry documentation](https://help.github.com/en/articles/configuring-docker-for-use-with-github-package-registry)
 
 ```
-$ docker login -u {user} -p {token}
+$ docker login docker.pkg.github.com -u {user} -p {token}
 $ docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION} .
 $ docker push docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION}
 ```
