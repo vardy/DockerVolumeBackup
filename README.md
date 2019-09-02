@@ -2,8 +2,9 @@
 
 ## Docker Image
 
-Find the image on Docker Hub: https://hub.docker.com/r/pants1/docker-volume-backup    
-Image: `pants1/docker-volume-backup:latest`
+Find the image in GitHub's package registry: https://github.com/vardy/DockerVolumeBackup/packages    
+Image: `docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION}`    
+Edit the image name to include the desired version.
 
 ## Configuration
 
@@ -42,12 +43,23 @@ You can find the exact names of the volumes to backup by listing your volumes wi
 
 ```yml
 backup:
-  image: pants1/docker-volume-backup:latest
+  image: docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION}
   env_file:
    - .env
   volumes:
    - /var/lib/docker/volumes/:/HostVolumeData
 ```
+
+## Deployment:
+
+[GitHub Package Registry documentation](https://help.github.com/en/articles/configuring-docker-for-use-with-github-package-registry)
+
+```
+$ docker login -u {user} -p {token}
+$ docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION} .
+```
+
+Replace version with latest release version.
 
 ## Todo:    
  - Add old backup cleanup
