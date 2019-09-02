@@ -50,13 +50,14 @@ backup:
    - /var/lib/docker/volumes/:/HostVolumeData
 ```
 
-## Deployment:
+## Deployment (for this repo):
 
 [GitHub Package Registry documentation](https://help.github.com/en/articles/configuring-docker-for-use-with-github-package-registry)
 
 ```
 $ docker login -u {user} -p {token}
 $ docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION} .
+$ docker push docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION}
 ```
 
 Replace version with latest release version.
