@@ -1,4 +1,4 @@
-name: Build and publish DockerVolumeBackup updates
+name: Build DockerVolumeBackup updates' Dockerfiles
 on: [push, pull_request]
 
 jobs:
