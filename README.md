@@ -14,7 +14,7 @@ The host directory `/var/lib/docker/volumes/` must be mounted to the container d
 This is where DockerVolumeBackup looks for volume data.
 
 **Provide the service with the following environment variables:**
-```
+```toml
 # S3 Credentials
 S3_Endpoint=https://example.com/
 S3_Region=us-east
