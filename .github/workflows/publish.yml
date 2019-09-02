@@ -10,5 +10,5 @@ jobs:
       - uses: actions/docker/cli@master
         with:
           args:
-           - docker login docker.pkg.github.com -u ${{ secrets.GITHUB_USER }} -p ${{ secrets.GITHUB_PACKAGE_TOKEN }}
-           - docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:${{ GITHUB_REF }} .
+            - docker login docker.pkg.github.com -u ${{ secrets.GITHUB_USER }} -p ${{ secrets.GITHUB_PACKAGE_TOKEN }}
+            - docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:${{ GITHUB_REF }} .
