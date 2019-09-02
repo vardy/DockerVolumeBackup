@@ -1,10 +1,12 @@
 # DockerVolumeBackup
 
+[![Version](https://img.shields.io/github/v/tag/vardy/dockervolumebackup?label=version&style=flat-square)](https://github.com/vardy/DockerVolumeBackup/packages) [![License](https://img.shields.io/github/license/vardy/dockervolumebackup?style=flat-square)](https://github.com/vardy/DockerVolumeBackup/blob/master/LICENSE)
+
 ## Docker Image
 
 Find the image in GitHub's package registry: https://github.com/vardy/DockerVolumeBackup/packages    
 Image: `docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-backup:{VERSION}`    
-Edit the image name to include the desired version.
+Edit the image name to include the latest version (with no leading 'v').
 
 ## Configuration
 
@@ -49,6 +51,8 @@ backup:
   volumes:
    - /var/lib/docker/volumes/:/HostVolumeData
 ```
+
+Edit the image name to include the latest version (with no leading 'v').
 
 ## Deployment (for this repo):
 
