@@ -62,8 +62,6 @@ $ docker build -t docker.pkg.github.com/vardy/dockervolumebackup/docker-volume-b
 Replace version with latest release version.
 
 ## Todo:    
+ - Add testing
  - Add old backup cleanup
- - Check all S3 actions for success (returns true)
- - Upload image to DockerHub
- - Clean up s3 library and main file procedures
- - Pass about filestreams as file objects instead of temporary files
+ - Clean up S3 library and main file procedures
