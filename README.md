@@ -4,7 +4,7 @@
 
 ## Docker Image
 
-On Docker Hub: https://hub.docker.com/r/pants1/docker-volume-backup
+On Docker Hub: https://hub.docker.com/r/pants1/docker-volume-backup    
 Image: `pants1/docker-volume-backup`    
 
 ## Configuration
